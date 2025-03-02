@@ -1,6 +1,6 @@
 <a href="https://github.com/GameDev46" title="Go to GitHub repo">
     <img src="https://img.shields.io/static/v1?label=GameDev46&message=|&color=Green&logo=github&style=for-the-badge&labelColor=1f1f22" alt="GameDev46 - Orbital_Visualiser">
-    <img src="https://img.shields.io/badge/Version-0.1.1-green?style=for-the-badge&labelColor=1f1f22&color=Green" alt="GameDev46 - Orbital_Visualiser">
+    <img src="https://img.shields.io/badge/Version-0.1.2-green?style=for-the-badge&labelColor=1f1f22&color=Green" alt="GameDev46 - Orbital_Visualiser">
 </a>
 
 
@@ -36,3 +36,7 @@
 
 # Orbital_Visualiser
 An application for showing the 3D electron probability cloud around an atom
+
+# Credits
+
+Inspire by minutephysics [orbital visualisation tool](https://www.youtube.com/watch?v=W2Xb2GFK2yc)
