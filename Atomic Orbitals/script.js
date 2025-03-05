@@ -27,6 +27,7 @@ const params = {
 	spinVelocity: 1,
 	showGrid: false,
 	background: 0xeeeeee,
+	colourMap: 0,
 	resetCamera: () => {
 		camera.position.set(0, 0, 30);
 		controls.target = new THREE.Vector3();
@@ -34,6 +35,16 @@ const params = {
 		controls.object.lookAt(new THREE.Vector3());
 	}
 }
+
+const colourMaps = {
+	"Shades of Green": 0,
+	"Nebula": 1,
+	"Heatmap": 2,
+	"Coolmap": 3,
+	"Diverging": 4,
+	"Inferno": 5,
+	"Viridis": 6
+};
 
 keyboard = {}
 
@@ -90,6 +101,10 @@ function init() {
 		
 		if (params.l >= params.n) params.l = params.n - 1;
 		l = params.l;
+
+		if (params.m < -params.l) params.m = -params.l;
+		if (params.m > params.l) params.m = params.l;
+		m = params.m;
 
 		if (params.n == 7) {
 			if (params.l > 1) params.l = 1;
@@ -173,6 +188,11 @@ function init() {
 	backgroundInput.onChange((value) => {
 		renderer.setClearColor(value);
 	});
+	
+	// GUI dropdown for colormap selection
+	settingsFolder.add(params, 'colourMap', colourMaps).name("Colour Map").onChange((value) => {
+		orbitalMesh.material.uniforms.colourMap.value = value;
+	});
 
 	// Create reset camera button
 	const resetCamButton = settingsFolder.add(params, "resetCamera").name("Reset Camera");
@@ -218,7 +238,9 @@ function generateOrbital() {
 			time: { value: 0.0 },
 			showInside: { value: true },
 			m: { value: 0.0 },
-			delta: { value: 0.0 }
+			delta: { value: 0.0 },
+			camPos: { value: new THREE.Vector3(0.0, 0.0, 0.0) },
+			colourMap: { value: 0.0 }
 		},
 		vertexColors: true
 	});
@@ -378,6 +400,8 @@ function animate() {
 	orbitalMesh.material.uniforms.showInside.value = params.viewInside;
 	orbitalMesh.material.uniforms.m.value = m;
 	orbitalMesh.material.uniforms.delta.value = delta;
+	orbitalMesh.material.uniforms.camPos.value = camera.position;
+	orbitalMesh.material.uniforms.colourMap.value = params.colourMap;
 
 	renderer.render(scene, camera);
 }
