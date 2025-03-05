@@ -10,6 +10,7 @@ const vertShader = `
     uniform bool showInside;
     uniform float m;
     uniform float delta;
+    uniform vec3 camPos;
   
 	void main() {
 
@@ -59,6 +60,10 @@ const fragShader = `
     uniform bool showInside;
     uniform float m;
     uniform float delta;
+    uniform vec3 camPos;
+    uniform float colourMap;
+
+    vec3 nucleusPosition = vec3(0.0, 0.0, 0.0);
 
     vec3 innerCol = vec3(0.6, 0.9, 0.3);
     vec3 middleCol = vec3(0.3, 0.9, 0.1);
@@ -82,23 +87,81 @@ const fragShader = `
         }
     }
 
+    vec3 getColourmap(float value, float map) {
+        value = clamp(value, 0.0, 1.0);
+        
+        if (map == 0.0) {
+            // Shades of Green
+            return smoothGradient(value, centralCol, innerCol, middleCol, outerCol); // White → Green
+        }
+        else if (map == 1.0) {
+            // Nebula
+            return mix(vec3(0.1, 0.0, 0.2), vec3(0.5, 0.2, 0.8), smoothstep(0.0, 1.0, value)); // Dark Purple → Blue
+        }
+        else if (map == 2.0) {
+            // Heatmap
+            return mix(vec3(1.0, 0.4, 0.4), vec3(0.4, 0.4, 1.0), smoothstep(0.0, 1.0, value)); // Red → Blue
+        }
+        else if (map == 3.0) {
+            // Coolmap
+            return mix(vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 1.0), smoothstep(0.0, 1.0, value)); // Blue → Cyan
+        }
+        else if (map == 4.0) {
+            // Diverging
+            if (value < 0.5) {
+                return mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), smoothstep(0.0, 0.5, value)); // Red → White
+            }
+            return mix(vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 1.0), smoothstep(0.5, 1.0, value)); // White → Blue
+        } 
+        else if (map == 5.0) {
+            // Inferno
+            if (value < 0.5) {
+                return mix(vec3(0.0, 0.0, 0.0), vec3(1.0, 0.4, 0.0), smoothstep(0.0, 0.5, value)); // Black → Orange
+            }
+            return mix(vec3(1.0, 0.4, 0.0), vec3(1.0, 1.0, 0.8), smoothstep(0.5, 1.0, value)); // Orange → Yellow → White
+        }
+        else if (map == 6.0) {
+            // Viridis
+            if (value < 0.5) {
+                return mix(vec3(0.0, 0.0, 0.3), vec3(0.0, 0.7, 0.2), smoothstep(0.0, 0.5, value)); // Dark Blue → Green
+            }
+            return mix(vec3(0.0, 0.7, 0.2), vec3(1.0, 1.0, 0.0), smoothstep(0.5, 1.0, value)); // Green → Yellow
+        }
+
+        return vec3(1.0); // Default (White)
+    }
+
  
  	void main() {
     
         vec3 normal = normalize(vNormal);
-        vec3 lightDir = normalize( vec3(1.0, 1.0, 1.0) );
+        vec3 lightDir = normalize( nucleusPosition - vPosition );
 
-        float intensity = max( 0.5, dot( normal, lightDir ) );
+        float diffuse = max( 0.0, dot( normal, lightDir ) );
 
-        float scaledProbability = vProbability;
-        scaledProbability = clamp(exp(-scaledProbability * 1.4), 0.0, 1.0);
+        float dist = length(vPosition - nucleusPosition);
+        float attenuation = 1.0 / (1.0 + 0.1 * dist * dist);
 
-        vec3 colour = smoothGradient(scaledProbability, centralCol, innerCol, middleCol, outerCol);
+        float ambient = 0.4;
+
+        vec3 viewDir = normalize(camPos - vPosition);
+        vec3 reflectDir = reflect(-lightDir, normal);
+        float specular = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+
+        float intensity = ambient + (diffuse + specular) * attenuation;
+        intensity = clamp(intensity, 0.2, 1.0); // Prevent extreme dark/light areas
+
+        float scaledProbability = clamp(exp(-vProbability * 1.4), 0.0, 1.0);
+
+        vec3 colour = getColourmap(scaledProbability, colourMap);
         colour *= intensity;
 
         float rim = 1.0 - max(dot(normalize(vNormal), normalize(vPosition)), 0.0);
-        vec3 rimColor = innerCol * 0.6 * pow(rim, 20.0); // Adjust for intensity
+        vec3 rimColor = colour * 0.6 * pow(rim, 20.0); // Adjust for intensity
         colour += rimColor;
+
+        //float smoothColourChange = sin(length(vPosition.xyz) * 5.0 - time * 3.0) * 0.5 + 0.5;
+        //colour += vec3(1.0, 1.0, 1.0) * smoothColourChange * 0.2;
 
         if (vPosition.z > 0.0 && vPosition.y > 0.0 && showInside) discard;
 
