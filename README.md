@@ -22,7 +22,7 @@
 <br>
 
 <div align="left">
-<a href="https://gamedev46.github.io/Orbital_Visualiser/Atomic Orbitals/">
+<a href="https://gamedev46.github.io/Orbital_Visualiser/">
     <img src="https://img.shields.io/badge/View_site-GH_Pages-2ea44f?style=for-the-badge&labelColor=1f1f22" alt="View site - GH Pages">
 </a>
 </div>
